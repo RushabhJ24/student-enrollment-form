@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Enrollment Form</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://api.jsonpowerdb.com/jpdb-commons.js"></script>
+    <script>
+        const dbBaseUrl = "https://api.jsonpowerdb.com";
+        const apiToken = "YOUR_API_TOKEN";
+        const studentTable = "STUDENT-TABLE";
+        const schoolDb = "SCHOOL-DB";
+
+        $(document).ready(function () {
+            resetForm();
+
+            $("#rollNo").on("blur", function () {
+                let rollNo = $(this).val();
+                if (rollNo) {
+                    let reqString = JSON.stringify({
+                        token: apiToken,
+                        dbname: schoolDb,
+                        relation: studentTable,
+                        cmd: "GET",
+                        jsonStr: { Roll_No: rollNo }
+                    });
+
+                    let res = executeCommandAtGivenBaseUrl(dbBaseUrl, "/api/iml", reqString);
+
+                    if (res.status === 200) {
+                        fillForm(res.data);
+                        enableFieldsForUpdate();
+                    } else {
+                        enableFieldsForSave();
+                    }
+                }
+            });
+
+            $("#saveBtn").on("click", function () {
+                if (validateForm()) {
+                    let formData = getFormData();
+                    let reqString = JSON.stringify({
+                        token: apiToken,
+                        dbname: schoolDb,
+                        relation: studentTable,
+                        cmd: "PUT",
+                        jsonStr: formData
+                    });
+
+                    let res = executeCommandAtGivenBaseUrl(dbBaseUrl, "/api/iml", reqString);
+                    if (res.status === 200) {
+                        alert("Data saved successfully!");
+                        resetForm();
+                    } else {
+                        alert("Error saving data: " + res.message);
+                    }
+                }
+            });
+
+            $("#updateBtn").on("click", function () {
+                if (validateForm()) {
+                    let formData = getFormData();
+                    let reqString = JSON.stringify({
+                        token: apiToken,
+                        dbname: schoolDb,
+                        relation: studentTable,
+                        cmd: "UPDATE",
+                        jsonStr: formData
+                    });
+
+                    let res = executeCommandAtGivenBaseUrl(dbBaseUrl, "/api/iml", reqString);
+                    if (res.status === 200) {
+                        alert("Data updated successfully!");
+                        resetForm();
+                    } else {
+                        alert("Error updating data: " + res.message);
+                    }
+                }
+            });
+
+            $("#resetBtn").on("click", function () {
+                resetForm();
+            });
+        });
+
+        function resetForm() {
+            $("#enrollmentForm")[0].reset();
+            $("#rollNo").prop("disabled", false).focus();
+            $("#saveBtn, #updateBtn, #resetBtn").prop("disabled", true);
+            $("#enrollmentForm input:not(#rollNo)").prop("disabled", true);
+        }
+
+        function enableFieldsForSave() {
+            $("#saveBtn, #resetBtn").prop("disabled", false);
+            $("#rollNo").prop("disabled", true);
+            $("#enrollmentForm input:not(#rollNo)").prop("disabled", false).first().focus();
+        }
+
+        function enableFieldsForUpdate() {
+            $("#updateBtn, #resetBtn").prop("disabled", false);
+            $("#rollNo").prop("disabled", true);
+            $("#enrollmentForm input:not(#rollNo)").prop("disabled", false).first().focus();
+        }
+
+        function validateForm() {
+            let isValid = true;
+            $("#enrollmentForm input:not(#rollNo)").each(function () {
+                if (!$(this).val()) {
+                    alert("Please fill all fields.");
+                    $(this).focus();
+                    isValid = false;
+                    return false;
+                }
+            });
+            return isValid;
+        }
+
+        function getFormData() {
+            return {
+                Roll_No: $("#rollNo").val(),
+                Full_Name: $("#fullName").val(),
+                Class: $("#class").val(),
+                Birth_Date: $("#birthDate").val(),
+                Address: $("#address").val(),
+                Enrollment_Date: $("#enrollmentDate").val()
+            };
+        }
+
+        function fillForm(data) {
+            $("#fullName").val(data.Full_Name);
+            $("#class").val(data.Class);
+            $("#birthDate").val(data.Birth_Date);
+            $("#address").val(data.Address);
+            $("#enrollmentDate").val(data.Enrollment_Date);
+        }
+    </script>
+</head>
+<body>
+    <h1>Student Enrollment Form</h1>
+    <form id="enrollmentForm">
+        <label for="rollNo">Roll No:</label>
+        <input type="text" id="rollNo" name="rollNo"><br><br>
+
+        <label for="fullName">Full Name:</label>
+        <input type="text" id="fullName" name="fullName"><br><br>
+
+        <label for="class">Class:</label>
+        <input type="text" id="class" name="class"><br><br>
+
+        <label for="birthDate">Birth Date:</label>
+        <input type="date" id="birthDate" name="birthDate"><br><br>
+
+        <label for="address">Address:</label>
+        <input type="text" id="address" name="address"><br><br>
+
+        <label for="enrollmentDate">Enrollment Date:</label>
+        <input type="date" id="enrollmentDate" name="enrollmentDate"><br><br>
+
+        <button type="button" id="saveBtn">Save</button>
+        <button type="button" id="updateBtn">Update</button>
+        <button type="button" id="resetBtn">Reset</button>
+    </form>
+</body>
+</html>
